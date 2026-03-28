@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>O'SECOU — Position Sécurisée</title>
+  <style>
+    :root {
+      --red: #E8192C;
+      --red-dark: #B01020;
+      --teal: #00C9B1;
+      --teal-dark: #009E8C;
+      --bg: #060C1A;
+      --bg2: #0D1829;
+      --bg3: #131F30;
+      --border: #1E2F45;
+      --text: #E8F0F8;
+      --muted: #5A7A9A;
+      --green: #00D97E;
+      --amber: #FFB800;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html, body { height:100%; overscroll-behavior:none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 16px 24px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0 20px;
+    }
+    .brand { display:flex; align-items:center; gap:10px; }
+    .brand-icon {
+      width:40px; height:40px;
+      background: var(--red);
+      border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px;
+    }
+    .brand-name { font-size:18px; font-weight:700; letter-spacing:.5px; }
+    .brand-sub { font-size:11px; color:var(--muted); margin-top:1px; }
+    .live-badge {
+      display:flex; align-items:center; gap:5px;
+      background:rgba(0,217,126,.1);
+      border:1px solid rgba(0,217,126,.25);
+      border-radius:20px;
+      padding:4px 10px;
+      font-size:11px; font-weight:600; color:var(--green);
+    }
+    .live-dot {
+      width:6px; height:6px;
+      background:var(--green);
+      border-radius:50%;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .live-dot.off { background:var(--muted); animation:none; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── CARTE ── */
+    .map-card {
+      width:100%; max-width:380px;
+      height:180px;
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      position:relative;
+      margin-bottom:14px;
+    }
+    #map-iframe {
+      width:100%; height:100%; border:none;
+      opacity:0; transition:opacity .5s;
+    }
+    #map-iframe.loaded { opacity:1; }
+    .map-placeholder {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:8px; color:var(--muted);
+    }
+    .map-placeholder-icon { font-size:32px; }
+    .map-placeholder-text { font-size:13px; }
+
+    /* ── COORDS ── */
+    .coords-card {
+      width:100%; max-width:380px;
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      margin-bottom:14px;
+    }
+    .coords-label {
+      font-size:10px; font-weight:600;
+      color:var(--muted);
+      text-transform:uppercase; letter-spacing:1px;
+      margin-bottom:10px;
+    }
+    .coords-value {
+      font-family:'Courier New', monospace;
+      font-size:16px; font-weight:700;
+      color:var(--teal);
+      letter-spacing:.3px;
+      margin-bottom:6px;
+    }
+    .address-value {
+      font-size:13px; color:var(--text);
+      line-height:1.4; margin-bottom:6px;
+      min-height:18px;
+    }
+    .address-sub {
+      font-size:11px; color:var(--muted);
+    }
+
+    /* ── MÉTRIQUES ── */
+    .metrics {
+      width:100%; max-width:380px;
+      display:grid; grid-template-columns:1fr 1fr 1fr;
+      gap:8px; margin-bottom:14px;
+    }
+    .metric {
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px 10px;
+      text-align:center;
+    }
+    .metric-val { font-size:15px; font-weight:700; margin-bottom:3px; }
+    .metric-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+    .ok   { color:var(--green); }
+    .warn { color:var(--amber); }
+    .err  { color:var(--red); }
+
+    /* ── STATUS ROWS ── */
+    .status-card {
+      width:100%; max-width:380px;
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px 16px;
+      margin-bottom:14px;
+    }
+    .status-row {
+      display:flex; align-items:center;
+      gap:12px; padding:6px 0;
+      border-bottom:1px solid var(--border);
+    }
+    .status-row:last-child { border-bottom:none; }
+    .s-dot {
+      width:8px; height:8px;
+      border-radius:50%;
+      background:var(--muted);
+      flex-shrink:0;
+    }
+    .s-dot.green { background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 1.5s infinite; }
+    .s-dot.amber { background:var(--amber); box-shadow:0 0 6px var(--amber); }
+    .s-dot.red   { background:var(--red);   box-shadow:0 0 6px var(--red); }
+    .s-label { font-size:12px; color:var(--muted); width:110px; flex-shrink:0; }
+    .s-val   { font-size:12px; color:var(--text); font-weight:500; flex:1; }
+
+    /* ── BOUTONS ── */
+    .btn-maps {
+      display:block; width:100%; max-width:380px;
+      padding:15px; margin-bottom:10px;
+      background:linear-gradient(135deg, #1A73E8, #0D47A1);
+      color:#fff; border:none; border-radius:14px;
+      font-size:15px; font-weight:700;
+      cursor:pointer; text-align:center;
+      text-decoration:none;
+      transition:opacity .15s, transform .1s;
+    }
+    .btn-maps:active { opacity:.85; transform:scale(.98); }
+    .btn-maps.hidden { display:none; }
+
+    .btn-stop {
+      display:block; width:100%; max-width:380px;
+      padding:13px; background:transparent;
+      color:var(--red); border:1px solid var(--red);
+      border-radius:14px; font-size:14px; font-weight:600;
+      cursor:pointer; text-align:center;
+      transition:background .15s;
+    }
+    .btn-stop:active { background:rgba(232,25,44,.1); }
+    .btn-stop:disabled { opacity:.4; cursor:default; }
+
+    /* ── ERREUR ── */
+    .err-box {
+      width:100%; max-width:380px;
+      background:rgba(232,25,44,.08);
+      border:1px solid rgba(232,25,44,.25);
+      border-radius:12px;
+      padding:12px 14px;
+      font-size:13px; color:#FF7B7B;
+      margin-bottom:14px;
+      display:none;
+    }
+    .err-box.show { display:block; }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top:12px;
+      font-size:10px; color:var(--muted);
+      text-align:center; line-height:1.6;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="brand">
+    <div class="brand-icon">🆘</div>
+    <div>
+      <div class="brand-name">O'SECOU</div>
+      <div class="brand-sub">Suivi GPS sécurisé</div>
+    </div>
+  </div>
+  <div class="live-badge">
+    <div class="live-dot off" id="live-dot"></div>
+    <span id="live-label">Démarrage</span>
+  </div>
+</div>
+
+<!-- CARTE -->
+<div class="map-card">
+  <div class="map-placeholder" id="map-placeholder">
+    <div class="map-placeholder-icon">🗺️</div>
+    <div class="map-placeholder-text">Acquisition GPS…</div>
+  </div>
+  <iframe id="map-iframe" title="Position victime" allowfullscreen></iframe>
+</div>
+
+<!-- COORDONNÉES + ADRESSE -->
+<div class="coords-card">
+  <div class="coords-label">📍 Position actuelle</div>
+  <div class="coords-value" id="coords-val">— , —</div>
+  <div class="address-value" id="address-val">Géocodage en cours…</div>
+  <div class="address-sub" id="address-sub"></div>
+</div>
+
+<!-- MÉTRIQUES -->
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-val ok" id="m-precision">—</div>
+    <div class="metric-lbl">Précision</div>
+  </div>
+  <div class="metric">
+    <div class="metric-val ok" id="m-envois">0</div>
+    <div class="metric-lbl">Envois</div>
+  </div>
+  <div class="metric">
+    <div class="metric-val" id="m-deplacement">—</div>
+    <div class="metric-lbl">Déplacmt</div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="status-card">
+  <div class="status-row">
+    <div class="s-dot amber" id="dot-gps"></div>
+    <div class="s-label">GPS</div>
+    <div class="s-val" id="sv-gps">Acquisition…</div>
+  </div>
+  <div class="status-row">
+    <div class="s-dot" id="dot-adresse"></div>
+    <div class="s-label">Adresse</div>
+    <div class="s-val" id="sv-adresse">En attente</div>
+  </div>
+  <div class="status-row">
+    <div class="s-dot" id="dot-send"></div>
+    <div class="s-label">Transmission</div>
+    <div class="s-val" id="sv-send">En attente</div>
+  </div>
+  <div class="status-row">
+    <div class="s-dot" id="dot-mouvement"></div>
+    <div class="s-label">Mouvement</div>
+    <div class="s-val" id="sv-mouvement">Analyse…</div>
+  </div>
+  <div class="status-row">
+    <div class="s-dot" id="dot-reseau"></div>
+    <div class="s-label">Réseau</div>
+    <div class="s-val" id="sv-reseau">Vérification…</div>
+  </div>
+</div>
+
+<!-- ERREUR -->
+<div class="err-box" id="err-box"></div>
+
+<!-- BOUTON MAPS -->
+<a class="btn-maps hidden" id="btn-maps" href="#" target="_blank">
+  🗺️ Voir ma position sur Google Maps
+</a>
+
+<!-- BOUTON STOP -->
+<button class="btn-stop" id="btn-stop" onclick="stopTracking()">
+  ⏹ Arrêter le partage de position
+</button>
+
+<div class="footer">
+  Vos données GPS sont transmises en temps réel aux services O'SECOU<br>
+  et supprimées automatiquement 24h après la fin de l'alerte.
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ══════════════════════════════════════════════════════════════════
+const CFG = {
+  webhookUrl:      'https://broodily-declinatory-ina.ngrok-free.dev/webhook-test/gps-osecou',   // ex: http://localhost:5678/webhook/gps-osecou
+  geocodeApiKey:   '',   // clé Google Maps Geocoding API
+  intervalMs:      5000,   // envoi GPS toutes les 5 secondes
+  geocodeEvery:    4,      // géocodage inverse toutes les 4 positions (20s) pour économiser quota
+  maxAccuracy:     150,    // rejet si précision > 150m (anti-faux GPS indoor)
+  minSpeedFakeGps: 999,    // rejet si speed > 999 km/h (GPS falsifié)
+  queueMax:        20,     // file d'attente hors-ligne max
+  batteryAdapt:    true,   // ralentit le polling si batterie < 20%
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ÉTAT GLOBAL
+// ══════════════════════════════════════════════════════════════════
+const STATE = {
+  sessionId:    generateId(),
+  userId:       getParam('user_id') || 'inconnu',
+  userName:     getParam('user_name') || 'Victime',
+  alertId:      getParam('alert_id') || null,
+  telegramId:   getParam('telegram_id') || null,
+
+  lat: null, lng: null, accuracy: null,
+  prevLat: null, prevLng: null,
+  speed: 0, distanceTotale: 0,
+  deplacement: false,
+
+  adresse: null, quartier: null, ville: null, rue: null,
+  geocodeCount: 0,
+
+  sendCount: 0, sendOk: 0, sendFail: 0,
+  queue: [],       // positions en attente (hors réseau)
+  intervalId: null,
+  watchId: null,
+  running: false,
+  startTime: Date.now(),
+
+  fakeDectected: false,
+  lastPositions: [],  // fenêtre glissante pour détection mouvement
+};
+
+// ══════════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ══════════════════════════════════════════════════════════════════
+function getParam(n) {
+  return new URL(location.href).searchParams.get(n);
+}
+function generateId() {
+  return 'SOS_' + Date.now() + '_' + Math.random().toString(36).slice(2,7).toUpperCase();
+}
+function el(id) { return document.getElementById(id); }
+function setDot(id, cls) {
+  const d = el(id);
+  d.className = 's-dot' + (cls ? ' '+cls : '');
+}
+
+// Haversine distance en mètres
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AMÉLIORATION 3 — ANTI-FAUX GPS + DÉTECTION MOUVEMENT
+// ══════════════════════════════════════════════════════════════════
+function validateGPS(lat, lng, accuracy, speed) {
+  // 1. Précision trop faible = signal intérieur ou brouillé
+  if (accuracy > CFG.maxAccuracy) {
+    return { valid: false, reason: `Précision insuffisante (±${Math.round(accuracy)}m > ±${CFG.maxAccuracy}m)` };
+  }
+  // 2. Coordonnées hors bbox Côte d'Ivoire (tolérance 50km de frontière)
+  if (lat < 3.8 || lat > 11.2 || lng < -9.0 || lng < -1.8) {
+    // On laisse passer mais on flag — peut être à l'étranger légitimement
+  }
+  // 3. Vitesse irréaliste → GPS mock/faux
+  if (speed !== null && speed !== undefined && !isNaN(speed)) {
+    const speedKmh = speed * 3.6;
+    if (speedKmh > CFG.minSpeedFakeGps) {
+      STATE.fakeDectected = true;
+      return { valid: false, reason: `Vitesse irréaliste (${Math.round(speedKmh)} km/h) — GPS falsifié détecté` };
+    }
+  }
+  // 4. Saut de position irréaliste (> 5km en 5s = 3600 km/h)
+  if (STATE.prevLat !== null) {
+    const dist = haversine(STATE.prevLat, STATE.prevLng, lat, lng);
+    const elapsed = CFG.intervalMs / 1000;
+    const speedMs = dist / elapsed;
+    if (speedMs > 277) { // 277 m/s = ~1000 km/h
+      return { valid: false, reason: `Saut de position irréaliste (${Math.round(dist)}m en ${elapsed}s)` };
+    }
+  }
+  STATE.fakeDectected = false;
+  return { valid: true };
+}
+
+function detectMouvement(lat, lng) {
+  STATE.lastPositions.push({ lat, lng, t: Date.now() });
+  if (STATE.lastPositions.length > 6) STATE.lastPositions.shift();
+
+  if (STATE.lastPositions.length < 2) return;
+
+  const first = STATE.lastPositions[0];
+  const last  = STATE.lastPositions[STATE.lastPositions.length - 1];
+  const dist  = haversine(first.lat, first.lng, last.lat, last.lng);
+  const dt    = (last.t - first.t) / 1000;
+
+  STATE.deplacement = dist > 20; // se déplace si > 20m sur la fenêtre
+  const speedKmh = dt > 0 ? (dist / dt * 3.6) : 0;
+
+  // Mise à jour UI mouvement
+  if (STATE.deplacement) {
+    setDot('dot-mouvement', 'green');
+    el('sv-mouvement').textContent = `En déplacement · ${Math.round(speedKmh)} km/h`;
+    el('m-deplacement').textContent = `${Math.round(speedKmh)} km/h`;
+    el('m-deplacement').className = 'metric-val ok';
+  } else {
+    setDot('dot-mouvement', 'amber');
+    el('sv-mouvement').textContent = 'Stationnaire';
+    el('m-deplacement').textContent = 'Arrêté';
+    el('m-deplacement').className = 'metric-val warn';
+  }
+
+  // Distance totale cumulée
+  if (STATE.prevLat !== null) {
+    STATE.distanceTotale += haversine(STATE.prevLat, STATE.prevLng, lat, lng);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AMÉLIORATION 1 — GÉOCODAGE INVERSE (quartier + rue)
+// ══════════════════════════════════════════════════════════════════
+async function reverseGeocode(lat, lng) {
+  if (!CFG.geocodeApiKey || CFG.geocodeApiKey.startsWith('REMPLACER')) {
+    // Fallback : Nominatim OpenStreetMap (gratuit, aucune clé requise)
+    try {
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
+        { headers: { 'User-Agent': 'OSECOU-App/1.0' } }
+      );
+      const d = await r.json();
+      const a = d.address || {};
+      STATE.rue      = a.road || a.pedestrian || a.footway || null;
+      STATE.quartier = a.suburb || a.neighbourhood || a.quarter || a.city_district || null;
+      STATE.ville    = a.city || a.town || a.village || 'Abidjan';
+      STATE.adresse  = d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      updateAddressUI();
+      setDot('dot-adresse', 'green');
+      el('sv-adresse').textContent = 'Adresse trouvée ✓';
+    } catch(e) {
+      setDot('dot-adresse', 'amber');
+      el('sv-adresse').textContent = 'Géocodage indisponible';
+    }
+    return;
+  }
+
+  // Google Geocoding API
+  try {
+    const r = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=fr&key=${CFG.geocodeApiKey}`
+    );
+    const d = await r.json();
+    if (d.status === 'OK' && d.results.length > 0) {
+      const comps = d.results[0].address_components || [];
+      const get = (type) => comps.find(c => c.types.includes(type))?.long_name || null;
+      STATE.rue      = get('route') || get('street_address');
+      STATE.quartier = get('sublocality_level_1') || get('neighborhood') || get('sublocality');
+      STATE.ville    = get('locality') || get('administrative_area_level_2') || 'Abidjan';
+      STATE.adresse  = d.results[0].formatted_address;
+      updateAddressUI();
+      setDot('dot-adresse', 'green');
+      el('sv-adresse').textContent = 'Adresse Google ✓';
+    }
+  } catch(e) {
+    setDot('dot-adresse', 'amber');
+    el('sv-adresse').textContent = 'Erreur géocodage';
+  }
+}
+
+function updateAddressUI() {
+  if (STATE.rue)      el('address-val').textContent = STATE.rue;
+  else if (STATE.adresse) el('address-val').textContent = STATE.adresse.split(',').slice(0,2).join(',');
+  
+  const parts = [];
+  if (STATE.quartier) parts.push(STATE.quartier);
+  if (STATE.ville)    parts.push(STATE.ville);
+  el('address-sub').textContent = parts.join(' · ');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AMÉLIORATION 2 — CARTE DIRECTEMENT VISIBLE DANS L'APP
+// ══════════════════════════════════════════════════════════════════
+function updateMap(lat, lng) {
+  const iframe = el('map-iframe');
+  const placeholder = el('map-placeholder');
+  
+  // OpenStreetMap embed (sans clé API, fonctionne toujours)
+  const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.005},${lat-0.004},${lng+0.005},${lat+0.004}&layer=mapnik&marker=${lat},${lng}`;
+  
+  if (iframe.src !== mapUrl) {
+    iframe.src = mapUrl;
+    iframe.onload = () => {
+      iframe.classList.add('loaded');
+      placeholder.style.display = 'none';
+    };
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RÉSEAU — Anti-perte + file d'attente
+// ══════════════════════════════════════════════════════════════════
+function isOnline() { return navigator.onLine; }
+
+function updateReseauUI() {
+  if (isOnline()) {
+    setDot('dot-reseau', 'green');
+    el('sv-reseau').textContent = `En ligne${STATE.queue.length > 0 ? ` · Envoi file (${STATE.queue.length})` : ' ✓'}`;
+  } else {
+    setDot('dot-reseau', 'amber');
+    el('sv-reseau').textContent = `Hors ligne · ${STATE.queue.length} en attente`;
+  }
+}
+
+async function flushQueue() {
+  if (!isOnline() || STATE.queue.length === 0) return;
+  const toSend = [...STATE.queue];
+  STATE.queue = [];
+  for (const payload of toSend) {
+    try {
+      await fetch(CFG.webhookUrl, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ ...payload, from_queue:true })
+      });
+    } catch(e) {
+      STATE.queue.unshift(payload); // remet en file si encore offline
+      break;
+    }
+  }
+  updateReseauUI();
+}
+
+window.addEventListener('online',  () => { updateReseauUI(); flushQueue(); });
+window.addEventListener('offline', () => { updateReseauUI(); });
+
+// ══════════════════════════════════════════════════════════════════
+// ADAPTATION BATTERIE
+// ══════════════════════════════════════════════════════════════════
+async function getBatteryLevel() {
+  if (!CFG.batteryAdapt || !navigator.getBattery) return 100;
+  try {
+    const bat = await navigator.getBattery();
+    return Math.round(bat.level * 100);
+  } catch(e) { return 100; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ENVOI WEBHOOK N8N
+// ══════════════════════════════════════════════════════════════════
+async function sendToN8n(payload) {
+  if (!isOnline()) {
+    // Mise en file hors-ligne
+    if (STATE.queue.length < CFG.queueMax) STATE.queue.push(payload);
+    updateReseauUI();
+    setDot('dot-send', 'amber');
+    el('sv-send').textContent = `Hors ligne · mis en file (#${STATE.queue.length})`;
+    return false;
+  }
+
+  try {
+    const r = await fetch(CFG.webhookUrl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    if (r.ok) {
+      STATE.sendOk++;
+      setDot('dot-send', 'green');
+      el('sv-send').textContent = `Transmis ✓ · ${STATE.sendOk} envoi${STATE.sendOk>1?'s':''}`;
+      // Vider la file si elle existe
+      if (STATE.queue.length > 0) setTimeout(flushQueue, 500);
+      return true;
+    } else {
+      throw new Error(`HTTP ${r.status}`);
+    }
+  } catch(err) {
+    STATE.sendFail++;
+    setDot('dot-send', 'red');
+    el('sv-send').textContent = `Erreur · ${err.message}`;
+    if (STATE.queue.length < CFG.queueMax) STATE.queue.push(payload);
+    return false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BOUCLE PRINCIPALE GPS
+// ══════════════════════════════════════════════════════════════════
+async function onPosition(position) {
+  const { latitude:lat, longitude:lng, accuracy, speed, altitude } = position.coords;
+
+  // Validation anti-faux GPS
+  const check = validateGPS(lat, lng, accuracy, speed);
+  if (!check.valid) {
+    showError(`⚠️ Signal GPS suspect : ${check.reason}`);
+    setDot('dot-gps', 'red');
+    el('sv-gps').textContent = 'Signal invalide';
+    return;
+  }
+
+  hideError();
+  STATE.lat = lat; STATE.lng = lng; STATE.accuracy = accuracy;
+  STATE.sendCount++;
+
+  // Détection mouvement
+  detectMouvement(lat, lng);
+
+  // Géocodage inverse (pas à chaque envoi pour économiser quota API)
+  STATE.geocodeCount++;
+  if (STATE.geocodeCount === 1 || STATE.geocodeCount % CFG.geocodeEvery === 0) {
+    reverseGeocode(lat, lng); // async, non-bloquant
+  }
+
+  // Mise à jour carte
+  updateMap(lat, lng);
+
+  // UI coordonnées
+  el('coords-val').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  el('m-precision').textContent = `±${Math.round(accuracy)}m`;
+  el('m-precision').className = 'metric-val ' + (accuracy < 30 ? 'ok' : accuracy < 80 ? 'warn' : 'err');
+  el('m-envois').textContent = STATE.sendCount;
+
+  setDot('dot-gps', 'green');
+  el('sv-gps').textContent = `Actif · ±${Math.round(accuracy)}m`;
+
+  // LIVE badge
+  el('live-dot').classList.remove('off');
+  el('live-label').textContent = 'EN DIRECT';
+
+  // Bouton Maps
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  const mapsNav  = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+  el('btn-maps').href = mapsUrl;
+  el('btn-maps').classList.remove('hidden');
+
+  // Batterie
+  const battery = await getBatteryLevel();
+  const elapsed = Math.round((Date.now() - STATE.startTime) / 1000);
+
+  // Payload enrichi pour n8n
+  const payload = {
+    // Identifiants session
+    session_id:     STATE.sessionId,
+    alert_id:       STATE.alertId,
+    user_id:        STATE.userId,
+    user_name:      STATE.userName,
+    telegram_id:    STATE.telegramId,
+
+    // GPS
+    latitude:       lat,
+    longitude:      lng,
+    accuracy:       Math.round(accuracy),
+    speed_kmh:      speed ? Math.round(speed * 3.6) : 0,
+    altitude:       altitude ? Math.round(altitude) : null,
+
+    // Adresse géocodée
+    adresse:        STATE.adresse,
+    rue:            STATE.rue,
+    quartier:       STATE.quartier,
+    ville:          STATE.ville || 'Abidjan',
+
+    // Mouvement
+    en_deplacement: STATE.deplacement,
+    distance_totale_m: Math.round(STATE.distanceTotale),
+
+    // Liens Google Maps
+    google_maps_position:   mapsUrl,
+    google_maps_navigation: mapsNav,
+
+    // Méta
+    send_count:     STATE.sendCount,
+    elapsed_seconds:elapsed,
+    battery_pct:    battery,
+    timestamp:      new Date().toISOString(),
+    source:         'osecou_miniapp_pro',
+  };
+
+  await sendToN8n(payload);
+  updateReseauUI();
+
+  STATE.prevLat = lat;
+  STATE.prevLng = lng;
+}
+
+function onGpsError(err) {
+  let msg = 'Impossible d\'obtenir votre position.';
+  if (err.code === 1) msg = '🔒 Accès GPS refusé.\nAutoriser la localisation dans les paramètres de votre navigateur.';
+  if (err.code === 2) msg = '📡 Signal GPS indisponible.\nDéplacez-vous vers un endroit dégagé.';
+  if (err.code === 3) msg = '⏱️ Délai GPS dépassé. Nouvelle tentative…';
+  showError(msg);
+  setDot('dot-gps', 'red');
+  el('sv-gps').textContent = 'Erreur GPS';
+}
+
+function showError(msg) {
+  const b = el('err-box');
+  b.textContent = msg; b.classList.add('show');
+}
+function hideError() {
+  el('err-box').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DÉMARRAGE / ARRÊT
+// ══════════════════════════════════════════════════════════════════
+async function startTracking() {
+  STATE.running = true;
+
+  // Intégration Telegram WebApp SDK
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+    window.Telegram.WebApp.MainButton.hide();
+  }
+
+  // Adaptation batterie : ralentit si < 20%
+  const bat = await getBatteryLevel();
+  let interval = CFG.intervalMs;
+  if (bat < 20) {
+    interval = CFG.intervalMs * 2; // 10s si batterie faible
+    el('sv-reseau').textContent = `🔋 Batterie faible (${bat}%) · intervalle réduit`;
+  }
+
+  // Watcher GPS haute précision (mise à jour continue)
+  if (navigator.geolocation) {
+    STATE.watchId = navigator.geolocation.watchPosition(
+      onPosition,
+      onGpsError,
+      { enableHighAccuracy: true, timeout: 9000, maximumAge: 2000 }
+    );
+    // Envoi périodique forcé (même si pas de mouvement)
+    STATE.intervalId = setInterval(async () => {
+      if (STATE.lat !== null) {
+        // Re-déclenche un getCurrentPosition pour forcer un refresh
+        navigator.geolocation.getCurrentPosition(onPosition, onGpsError, {
+          enableHighAccuracy: true, timeout: 8000, maximumAge: 0
+        });
+      }
+    }, interval);
+  } else {
+    showError('Géolocalisation non supportée sur cet appareil.');
+  }
+}
+
+function stopTracking() {
+  STATE.running = false;
+  if (STATE.intervalId)  clearInterval(STATE.intervalId);
+  if (STATE.watchId !== null) navigator.geolocation.clearWatch(STATE.watchId);
+
+  el('live-dot').classList.add('off');
+  el('live-label').textContent = 'Arrêté';
+  setDot('dot-gps', '');
+  setDot('dot-send', '');
+
+  const btn = el('btn-stop');
+  btn.textContent = '✓ Partage de position arrêté';
+  btn.disabled = true;
+
+  if (window.Telegram?.WebApp) {
+    setTimeout(() => window.Telegram.WebApp.close(), 1200);
+  }
+}
+
+window.addEventListener('load', startTracking);
+window.addEventListener('beforeunload', stopTracking);
+</script>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</body>
+</html>
