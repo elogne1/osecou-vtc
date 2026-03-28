@@ -1,224 +1,86 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>O'SECOU — Position Sécurisée</title>
-  <style>
-    :root {
-      --red: #E8192C;
-      --red-dark: #B01020;
-      --teal: #00C9B1;
-      --teal-dark: #009E8C;
-      --bg: #060C1A;
-      --bg2: #0D1829;
-      --bg3: #131F30;
-      --border: #1E2F45;
-      --text: #E8F0F8;
-      --muted: #5A7A9A;
-      --green: #00D97E;
-      --amber: #FFB800;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html, body { height:100%; overscroll-behavior:none; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px 16px 24px;
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>O'SECOU — Position Sécurisée</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{
+  --red:#E8192C;--red-dk:#9B0F1C;
+  --teal:#00C9B1;--green:#00D97E;--amber:#FFB800;
+  --bg:#060C1A;--bg2:#0D1829;--bg3:#131F30;
+  --border:#1E2F45;--text:#E8F0F8;--muted:#5A7A9A;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;padding:12px 14px 20px}
 
-    /* ── HEADER ── */
-    .header {
-      width: 100%;
-      max-width: 380px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 0 20px;
-    }
-    .brand { display:flex; align-items:center; gap:10px; }
-    .brand-icon {
-      width:40px; height:40px;
-      background: var(--red);
-      border-radius:10px;
-      display:flex; align-items:center; justify-content:center;
-      font-size:20px;
-    }
-    .brand-name { font-size:18px; font-weight:700; letter-spacing:.5px; }
-    .brand-sub { font-size:11px; color:var(--muted); margin-top:1px; }
-    .live-badge {
-      display:flex; align-items:center; gap:5px;
-      background:rgba(0,217,126,.1);
-      border:1px solid rgba(0,217,126,.25);
-      border-radius:20px;
-      padding:4px 10px;
-      font-size:11px; font-weight:600; color:var(--green);
-    }
-    .live-dot {
-      width:6px; height:6px;
-      background:var(--green);
-      border-radius:50%;
-      animation: blink 1.2s ease-in-out infinite;
-    }
-    .live-dot.off { background:var(--muted); animation:none; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.header{width:100%;max-width:390px;display:flex;align-items:center;justify-content:space-between;padding:6px 0 14px}
+.brand{display:flex;align-items:center;gap:9px}
+.brand-icon{width:38px;height:38px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.brand-name{font-size:17px;font-weight:700;letter-spacing:.4px}
+.brand-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.live-badge{display:flex;align-items:center;gap:5px;background:rgba(0,217,126,.1);border:1px solid rgba(0,217,126,.22);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green)}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.2s infinite}
+.live-dot.off{background:var(--muted);animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-    /* ── CARTE ── */
-    .map-card {
-      width:100%; max-width:380px;
-      height:180px;
-      background:var(--bg2);
-      border:1px solid var(--border);
-      border-radius:16px;
-      overflow:hidden;
-      position:relative;
-      margin-bottom:14px;
-    }
-    #map-iframe {
-      width:100%; height:100%; border:none;
-      opacity:0; transition:opacity .5s;
-    }
-    #map-iframe.loaded { opacity:1; }
-    .map-placeholder {
-      position:absolute; inset:0;
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      gap:8px; color:var(--muted);
-    }
-    .map-placeholder-icon { font-size:32px; }
-    .map-placeholder-text { font-size:13px; }
+/* ── CARTE LEAFLET ── */
+.map-wrap{width:100%;max-width:390px;height:200px;border-radius:14px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;position:relative}
+#map{width:100%;height:100%;background:var(--bg2)}
+.map-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:13px;pointer-events:none;transition:opacity .4s}
+.map-loading.hidden{opacity:0}
 
-    /* ── COORDS ── */
-    .coords-card {
-      width:100%; max-width:380px;
-      background:var(--bg2);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:16px;
-      margin-bottom:14px;
-    }
-    .coords-label {
-      font-size:10px; font-weight:600;
-      color:var(--muted);
-      text-transform:uppercase; letter-spacing:1px;
-      margin-bottom:10px;
-    }
-    .coords-value {
-      font-family:'Courier New', monospace;
-      font-size:16px; font-weight:700;
-      color:var(--teal);
-      letter-spacing:.3px;
-      margin-bottom:6px;
-    }
-    .address-value {
-      font-size:13px; color:var(--text);
-      line-height:1.4; margin-bottom:6px;
-      min-height:18px;
-    }
-    .address-sub {
-      font-size:11px; color:var(--muted);
-    }
+/* ── ALERTE CRASH/CHUTE ── */
+.crash-alert{width:100%;max-width:390px;background:rgba(232,25,44,.12);border:1px solid rgba(232,25,44,.4);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:none}
+.crash-alert.show{display:flex;align-items:center;gap:10px}
+.crash-icon{font-size:22px;flex-shrink:0}
+.crash-text{font-size:13px;color:#FF8888;font-weight:600}
+.crash-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.crash-cancel{margin-left:auto;font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline;flex-shrink:0}
 
-    /* ── MÉTRIQUES ── */
-    .metrics {
-      width:100%; max-width:380px;
-      display:grid; grid-template-columns:1fr 1fr 1fr;
-      gap:8px; margin-bottom:14px;
-    }
-    .metric {
-      background:var(--bg2);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:12px 10px;
-      text-align:center;
-    }
-    .metric-val { font-size:15px; font-weight:700; margin-bottom:3px; }
-    .metric-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
-    .ok   { color:var(--green); }
-    .warn { color:var(--amber); }
-    .err  { color:var(--red); }
+/* ── IMMOBILITÉ ── */
+.immo-alert{width:100%;max-width:390px;background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#FFCC44;display:none}
+.immo-alert.show{display:block}
 
-    /* ── STATUS ROWS ── */
-    .status-card {
-      width:100%; max-width:380px;
-      background:var(--bg2);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:14px 16px;
-      margin-bottom:14px;
-    }
-    .status-row {
-      display:flex; align-items:center;
-      gap:12px; padding:6px 0;
-      border-bottom:1px solid var(--border);
-    }
-    .status-row:last-child { border-bottom:none; }
-    .s-dot {
-      width:8px; height:8px;
-      border-radius:50%;
-      background:var(--muted);
-      flex-shrink:0;
-    }
-    .s-dot.green { background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 1.5s infinite; }
-    .s-dot.amber { background:var(--amber); box-shadow:0 0 6px var(--amber); }
-    .s-dot.red   { background:var(--red);   box-shadow:0 0 6px var(--red); }
-    .s-label { font-size:12px; color:var(--muted); width:110px; flex-shrink:0; }
-    .s-val   { font-size:12px; color:var(--text); font-weight:500; flex:1; }
+/* ── COORDS ── */
+.coords-card{width:100%;max-width:390px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+.card-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.coords-val{font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:var(--teal);letter-spacing:.3px;margin-bottom:4px}
+.address-val{font-size:13px;color:var(--text);line-height:1.4;margin-bottom:3px;min-height:16px}
+.address-sub{font-size:11px;color:var(--muted)}
 
-    /* ── BOUTONS ── */
-    .btn-maps {
-      display:block; width:100%; max-width:380px;
-      padding:15px; margin-bottom:10px;
-      background:linear-gradient(135deg, #1A73E8, #0D47A1);
-      color:#fff; border:none; border-radius:14px;
-      font-size:15px; font-weight:700;
-      cursor:pointer; text-align:center;
-      text-decoration:none;
-      transition:opacity .15s, transform .1s;
-    }
-    .btn-maps:active { opacity:.85; transform:scale(.98); }
-    .btn-maps.hidden { display:none; }
+/* ── MÉTRIQUES ── */
+.metrics{width:100%;max-width:390px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:10px 6px;text-align:center}
+.metric-val{font-size:14px;font-weight:700;margin-bottom:2px}
+.metric-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.ok{color:var(--green)}.warn{color:var(--amber)}.err{color:var(--red)}.info{color:var(--teal)}
 
-    .btn-stop {
-      display:block; width:100%; max-width:380px;
-      padding:13px; background:transparent;
-      color:var(--red); border:1px solid var(--red);
-      border-radius:14px; font-size:14px; font-weight:600;
-      cursor:pointer; text-align:center;
-      transition:background .15s;
-    }
-    .btn-stop:active { background:rgba(232,25,44,.1); }
-    .btn-stop:disabled { opacity:.4; cursor:default; }
+/* ── STATUS ── */
+.status-card{width:100%;max-width:390px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.sr{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border)}
+.sr:last-child{border-bottom:none}
+.sd{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.sd.g{background:var(--green);box-shadow:0 0 5px var(--green);animation:blink 1.5s infinite}
+.sd.a{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+.sd.r{background:var(--red);box-shadow:0 0 5px var(--red)}
+.sl{font-size:11px;color:var(--muted);width:100px;flex-shrink:0}
+.sv{font-size:12px;color:var(--text);font-weight:500;flex:1}
 
-    /* ── ERREUR ── */
-    .err-box {
-      width:100%; max-width:380px;
-      background:rgba(232,25,44,.08);
-      border:1px solid rgba(232,25,44,.25);
-      border-radius:12px;
-      padding:12px 14px;
-      font-size:13px; color:#FF7B7B;
-      margin-bottom:14px;
-      display:none;
-    }
-    .err-box.show { display:block; }
-
-    /* ── FOOTER ── */
-    .footer {
-      margin-top:12px;
-      font-size:10px; color:var(--muted);
-      text-align:center; line-height:1.6;
-    }
-  </style>
+/* ── BOUTONS ── */
+.btn-maps{display:block;width:100%;max-width:390px;padding:14px;margin-bottom:9px;background:#1A73E8;color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;transition:opacity .15s}
+.btn-maps:active{opacity:.8}
+.btn-maps.hidden{display:none}
+.btn-stop{display:block;width:100%;max-width:390px;padding:12px;background:transparent;color:var(--red);border:1px solid var(--red);border-radius:13px;font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+.btn-stop:active{background:rgba(232,25,44,.1)}
+.btn-stop:disabled{opacity:.4;cursor:default}
+.footer{margin-top:10px;font-size:10px;color:var(--muted);text-align:center;line-height:1.6}
+</style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <div class="brand">
     <div class="brand-icon">🆘</div>
@@ -233,568 +95,560 @@
   </div>
 </div>
 
-<!-- CARTE -->
-<div class="map-card">
-  <div class="map-placeholder" id="map-placeholder">
-    <div class="map-placeholder-icon">🗺️</div>
-    <div class="map-placeholder-text">Acquisition GPS…</div>
+<!-- ALERTE CHUTE -->
+<div class="crash-alert" id="crash-alert">
+  <div class="crash-icon">⚠️</div>
+  <div>
+    <div class="crash-text">Impact détecté !</div>
+    <div class="crash-sub" id="crash-sub">Alerte envoyée aux secours</div>
   </div>
-  <iframe id="map-iframe" title="Position victime" allowfullscreen></iframe>
+  <span class="crash-cancel" onclick="cancelCrash()">Annuler</span>
 </div>
 
-<!-- COORDONNÉES + ADRESSE -->
+<!-- ALERTE IMMOBILITÉ -->
+<div class="immo-alert" id="immo-alert">
+  ⏱️ <strong>Immobilité prolongée</strong> — alerte envoyée aux secours
+</div>
+
+<!-- CARTE LEAFLET LIVE -->
+<div class="map-wrap">
+  <div id="map"></div>
+  <div class="map-loading" id="map-loading">
+    <span style="font-size:28px">🗺️</span>
+    <span>Acquisition GPS…</span>
+  </div>
+</div>
+
+<!-- COORDONNÉES -->
 <div class="coords-card">
-  <div class="coords-label">📍 Position actuelle</div>
-  <div class="coords-value" id="coords-val">— , —</div>
-  <div class="address-value" id="address-val">Géocodage en cours…</div>
+  <div class="card-label">📍 Position actuelle</div>
+  <div class="coords-val" id="coords-val">— , —</div>
+  <div class="address-val" id="address-val">Géocodage en cours…</div>
   <div class="address-sub" id="address-sub"></div>
 </div>
 
 <!-- MÉTRIQUES -->
 <div class="metrics">
-  <div class="metric">
-    <div class="metric-val ok" id="m-precision">—</div>
-    <div class="metric-lbl">Précision</div>
-  </div>
-  <div class="metric">
-    <div class="metric-val ok" id="m-envois">0</div>
-    <div class="metric-lbl">Envois</div>
-  </div>
-  <div class="metric">
-    <div class="metric-val" id="m-deplacement">—</div>
-    <div class="metric-lbl">Déplacmt</div>
-  </div>
+  <div class="metric"><div class="metric-val ok" id="m-prec">—</div><div class="metric-lbl">Précision</div></div>
+  <div class="metric"><div class="metric-val info" id="m-envois">0</div><div class="metric-lbl">Envois</div></div>
+  <div class="metric"><div class="metric-val" id="m-speed">—</div><div class="metric-lbl">Vitesse</div></div>
+  <div class="metric"><div class="metric-val" id="m-bat">—</div><div class="metric-lbl">Batterie</div></div>
 </div>
 
 <!-- STATUS -->
 <div class="status-card">
-  <div class="status-row">
-    <div class="s-dot amber" id="dot-gps"></div>
-    <div class="s-label">GPS</div>
-    <div class="s-val" id="sv-gps">Acquisition…</div>
-  </div>
-  <div class="status-row">
-    <div class="s-dot" id="dot-adresse"></div>
-    <div class="s-label">Adresse</div>
-    <div class="s-val" id="sv-adresse">En attente</div>
-  </div>
-  <div class="status-row">
-    <div class="s-dot" id="dot-send"></div>
-    <div class="s-label">Transmission</div>
-    <div class="s-val" id="sv-send">En attente</div>
-  </div>
-  <div class="status-row">
-    <div class="s-dot" id="dot-mouvement"></div>
-    <div class="s-label">Mouvement</div>
-    <div class="s-val" id="sv-mouvement">Analyse…</div>
-  </div>
-  <div class="status-row">
-    <div class="s-dot" id="dot-reseau"></div>
-    <div class="s-label">Réseau</div>
-    <div class="s-val" id="sv-reseau">Vérification…</div>
-  </div>
+  <div class="sr"><div class="sd a" id="d-gps"></div><div class="sl">GPS</div><div class="sv" id="s-gps">Acquisition…</div></div>
+  <div class="sr"><div class="sd" id="d-addr"></div><div class="sl">Adresse</div><div class="sv" id="s-addr">En attente</div></div>
+  <div class="sr"><div class="sd" id="d-send"></div><div class="sl">Transmission</div><div class="sv" id="s-send">En attente</div></div>
+  <div class="sr"><div class="sd" id="d-move"></div><div class="sl">Mouvement</div><div class="sv" id="s-move">Analyse…</div></div>
+  <div class="sr"><div class="sd" id="d-net"></div><div class="sl">Réseau</div><div class="sv" id="s-net">Vérification…</div></div>
+  <div class="sr"><div class="sd" id="d-crash"></div><div class="sl">Capteurs</div><div class="sv" id="s-crash">Initialisation…</div></div>
 </div>
 
-<!-- ERREUR -->
-<div class="err-box" id="err-box"></div>
+<a class="btn-maps hidden" id="btn-maps" href="#" target="_blank">🗺️ Voir sur Google Maps</a>
+<button class="btn-stop" id="btn-stop" onclick="stopTracking()">⏹ Arrêter le partage</button>
+<div class="footer">Position transmise en temps réel aux services O'SECOU<br>Supprimée automatiquement 24h après la fin de l'alerte</div>
 
-<!-- BOUTON MAPS -->
-<a class="btn-maps hidden" id="btn-maps" href="#" target="_blank">
-  🗺️ Voir ma position sur Google Maps
-</a>
-
-<!-- BOUTON STOP -->
-<button class="btn-stop" id="btn-stop" onclick="stopTracking()">
-  ⏹ Arrêter le partage de position
-</button>
-
-<div class="footer">
-  Vos données GPS sont transmises en temps réel aux services O'SECOU<br>
-  et supprimées automatiquement 24h après la fin de l'alerte.
-</div>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // CONFIGURATION
-// ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 const CFG = {
-  webhookUrl:      'https://broodily-declinatory-ina.ngrok-free.dev/webhook-test/gps-osecou',   // ex: http://localhost:5678/webhook/gps-osecou
-  geocodeApiKey:   '',   // clé Google Maps Geocoding API
-  intervalMs:      5000,   // envoi GPS toutes les 5 secondes
-  geocodeEvery:    4,      // géocodage inverse toutes les 4 positions (20s) pour économiser quota
-  maxAccuracy:     150,    // rejet si précision > 150m (anti-faux GPS indoor)
-  minSpeedFakeGps: 999,    // rejet si speed > 999 km/h (GPS falsifié)
-  queueMax:        20,     // file d'attente hors-ligne max
-  batteryAdapt:    true,   // ralentit le polling si batterie < 20%
+  webhookUrl:    'https://broodily-declinatory-ina.ngrok-free.dev/webhook-test/gps-osecou',
+  geocodeKey:    '',               // vide = Nominatim gratuit
+  intervalMs:    2000,             // envoi toutes les 2 secondes
+  geocodeEvery:  10,               // géocodage toutes les 10 positions
+  maxAccuracy:   150,              // rejet si > 150m
+  crashForce:    25,               // g-force détection chute
+  crashCancelMs: 8000,             // délai annulation alerte chute
+  immoMs:        180000,           // 3min immobilité = alerte
+  immoMinDist:   10,               // < 10m = immobile
+  heartbeatMs:   15000,            // heartbeat toutes les 15s
+  queueMax:      50,               // file hors-ligne max
+  kalmanFactor:  0.7,              // lissage Kalman (0=aucun, 1=max)
+  batteryLow:    20,               // seuil batterie faible
+  watchdogMs:    15000,            // redémarrage auto si bloqué
 };
 
-// ══════════════════════════════════════════════════════════════════
-// ÉTAT GLOBAL
-// ══════════════════════════════════════════════════════════════════
-const STATE = {
-  sessionId:    generateId(),
-  userId:       getParam('user_id') || 'inconnu',
-  userName:     getParam('user_name') || 'Victime',
-  alertId:      getParam('alert_id') || null,
-  telegramId:   getParam('telegram_id') || null,
+// ═══════════════════════════════════════════════════════════════
+// ÉTAT
+// ═══════════════════════════════════════════════════════════════
+const S = {
+  sessionId:   genId(),
+  userId:      param('user_id') || 'inconnu',
+  userName:    param('user_name') || 'Victime',
+  alertId:     param('alert_id') || null,
+  telegramId:  param('telegram_id') || null,
 
-  lat: null, lng: null, accuracy: null,
-  prevLat: null, prevLng: null,
-  speed: 0, distanceTotale: 0,
-  deplacement: false,
+  lat:null, lng:null, acc:null,
+  smoothLat:null, smoothLng:null,
+  prevLat:null, prevLng:null,
+  speed:0, distTotal:0,
+  moving:false,
 
-  adresse: null, quartier: null, ville: null, rue: null,
-  geocodeCount: 0,
+  adresse:null, rue:null, quartier:null, ville:null,
+  geocodeN:0,
 
-  sendCount: 0, sendOk: 0, sendFail: 0,
-  queue: [],       // positions en attente (hors réseau)
-  intervalId: null,
-  watchId: null,
-  running: false,
-  startTime: Date.now(),
+  sendCount:0, sendOk:0, sendFail:0,
+  queue:[],
+  running:false,
+  startTime:Date.now(),
+  lastSendTime:0,
+  lastMoveTime:Date.now(),
 
-  fakeDectected: false,
-  lastPositions: [],  // fenêtre glissante pour détection mouvement
+  crashActive:false,
+  crashTimer:null,
+  immoAlerted:false,
+
+  watchId:null, intervalId:null, heartId:null, watchdogId:null,
+  posHistory:[],  // pour historique trajet carte
 };
 
-// ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// CARTE LEAFLET
+// ═══════════════════════════════════════════════════════════════
+let map = null, mapMarker = null, mapCircle = null, mapPolyline = null;
+const trailCoords = [];
+
+function initMap(lat, lng, acc) {
+  if (map) return;
+  map = L.map('map', {zoomControl:false, attributionControl:false})
+         .setView([lat, lng], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19, crossOrigin:true
+  }).addTo(map);
+
+  const icon = L.divIcon({
+    className:'',
+    html:'<div style="width:16px;height:16px;background:#E8192C;border:3px solid #fff;border-radius:50%;box-shadow:0 0 6px rgba(232,25,44,.6)"></div>',
+    iconAnchor:[8,8]
+  });
+  mapMarker  = L.marker([lat,lng], {icon}).addTo(map);
+  mapCircle  = L.circle([lat,lng], {radius:acc, color:'#E8192C', fillColor:'#E8192C', fillOpacity:.08, weight:1}).addTo(map);
+  mapPolyline= L.polyline([], {color:'#00C9B1', weight:3, opacity:.7}).addTo(map);
+
+  el('map-loading').classList.add('hidden');
+}
+
+function updateMap(lat, lng, acc) {
+  if (!map) { initMap(lat, lng, acc); return; }
+  mapMarker.setLatLng([lat, lng]);
+  mapCircle.setLatLng([lat, lng]).setRadius(acc);
+  trailCoords.push([lat, lng]);
+  if (trailCoords.length > 200) trailCoords.shift();
+  mapPolyline.setLatLngs(trailCoords);
+  map.panTo([lat, lng], {animate:true, duration:.8});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FILTRE DE KALMAN SIMPLIFIÉ (anti-saut GPS)
+// ═══════════════════════════════════════════════════════════════
+function kalman(lat, lng) {
+  if (S.smoothLat === null) {
+    S.smoothLat = lat; S.smoothLng = lng;
+    return {lat, lng};
+  }
+  const f = CFG.kalmanFactor;
+  S.smoothLat = S.smoothLat * f + lat * (1 - f);
+  S.smoothLng = S.smoothLng * f + lng * (1 - f);
+  return {lat: S.smoothLat, lng: S.smoothLng};
+}
+
+// ═══════════════════════════════════════════════════════════════
 // UTILITAIRES
-// ══════════════════════════════════════════════════════════════════
-function getParam(n) {
-  return new URL(location.href).searchParams.get(n);
-}
-function generateId() {
-  return 'SOS_' + Date.now() + '_' + Math.random().toString(36).slice(2,7).toUpperCase();
-}
-function el(id) { return document.getElementById(id); }
-function setDot(id, cls) {
-  const d = el(id);
-  d.className = 's-dot' + (cls ? ' '+cls : '');
+// ═══════════════════════════════════════════════════════════════
+function param(n){ return new URL(location.href).searchParams.get(n); }
+function genId(){ return 'SOS_'+Date.now()+'_'+Math.random().toString(36).slice(2,7).toUpperCase(); }
+function el(id){ return document.getElementById(id); }
+function dot(id,cls){ el(id).className='sd'+(cls?' '+cls:''); }
+
+function haversine(a,b,c,d){
+  const R=6371000, dL=(c-a)*Math.PI/180, dG=(d-b)*Math.PI/180;
+  const x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
-// Haversine distance en mètres
-function haversine(lat1, lng1, lat2, lng2) {
-  const R = 6371000;
-  const dLat = (lat2-lat1)*Math.PI/180;
-  const dLng = (lng2-lng1)*Math.PI/180;
-  const a = Math.sin(dLat/2)**2 +
-            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-// ══════════════════════════════════════════════════════════════════
-// AMÉLIORATION 3 — ANTI-FAUX GPS + DÉTECTION MOUVEMENT
-// ══════════════════════════════════════════════════════════════════
-function validateGPS(lat, lng, accuracy, speed) {
-  // 1. Précision trop faible = signal intérieur ou brouillé
-  if (accuracy > CFG.maxAccuracy) {
-    return { valid: false, reason: `Précision insuffisante (±${Math.round(accuracy)}m > ±${CFG.maxAccuracy}m)` };
+// ═══════════════════════════════════════════════════════════════
+// VALIDATION ANTI-FAUX GPS
+// ═══════════════════════════════════════════════════════════════
+function validateGPS(lat, lng, acc, speed) {
+  if (isNaN(lat)||isNaN(lng)) return {ok:false, reason:'Coordonnées manquantes'};
+  if (Math.abs(lat)>90||Math.abs(lng)>180) return {ok:false, reason:'Hors limites'};
+  if (acc > CFG.maxAccuracy) return {ok:false, reason:'Précision insuffisante ±'+Math.round(acc)+'m'};
+  if (speed && speed*3.6 > 999) return {ok:false, reason:'Vitesse irréaliste (GPS falsifié)'};
+  if (S.prevLat !== null) {
+    const dist = haversine(S.prevLat, S.prevLng, lat, lng);
+    if (dist / (CFG.intervalMs/1000) > 300) return {ok:false, reason:'Saut de position ('+Math.round(dist)+'m)'};
   }
-  // 2. Coordonnées hors bbox Côte d'Ivoire (tolérance 50km de frontière)
-  if (lat < 3.8 || lat > 11.2 || lng < -9.0 || lng < -1.8) {
-    // On laisse passer mais on flag — peut être à l'étranger légitimement
-  }
-  // 3. Vitesse irréaliste → GPS mock/faux
-  if (speed !== null && speed !== undefined && !isNaN(speed)) {
-    const speedKmh = speed * 3.6;
-    if (speedKmh > CFG.minSpeedFakeGps) {
-      STATE.fakeDectected = true;
-      return { valid: false, reason: `Vitesse irréaliste (${Math.round(speedKmh)} km/h) — GPS falsifié détecté` };
-    }
-  }
-  // 4. Saut de position irréaliste (> 5km en 5s = 3600 km/h)
-  if (STATE.prevLat !== null) {
-    const dist = haversine(STATE.prevLat, STATE.prevLng, lat, lng);
-    const elapsed = CFG.intervalMs / 1000;
-    const speedMs = dist / elapsed;
-    if (speedMs > 277) { // 277 m/s = ~1000 km/h
-      return { valid: false, reason: `Saut de position irréaliste (${Math.round(dist)}m en ${elapsed}s)` };
-    }
-  }
-  STATE.fakeDectected = false;
-  return { valid: true };
+  return {ok:true};
 }
 
-function detectMouvement(lat, lng) {
-  STATE.lastPositions.push({ lat, lng, t: Date.now() });
-  if (STATE.lastPositions.length > 6) STATE.lastPositions.shift();
+// ═══════════════════════════════════════════════════════════════
+// DÉTECTION MOUVEMENT + IMMOBILITÉ SUSPECTE
+// ═══════════════════════════════════════════════════════════════
+function analyseMovement(lat, lng) {
+  S.posHistory.push({lat, lng, t:Date.now()});
+  if (S.posHistory.length > 10) S.posHistory.shift();
+  if (S.posHistory.length < 2) return;
 
-  if (STATE.lastPositions.length < 2) return;
-
-  const first = STATE.lastPositions[0];
-  const last  = STATE.lastPositions[STATE.lastPositions.length - 1];
+  const first = S.posHistory[0], last = S.posHistory[S.posHistory.length-1];
   const dist  = haversine(first.lat, first.lng, last.lat, last.lng);
   const dt    = (last.t - first.t) / 1000;
+  const kmh   = dt > 0 ? dist/dt*3.6 : 0;
+  S.speed     = Math.round(kmh);
+  S.moving    = dist > 15;
 
-  STATE.deplacement = dist > 20; // se déplace si > 20m sur la fenêtre
-  const speedKmh = dt > 0 ? (dist / dt * 3.6) : 0;
+  if (S.prevLat !== null) S.distTotal += haversine(S.prevLat, S.prevLng, lat, lng);
 
-  // Mise à jour UI mouvement
-  if (STATE.deplacement) {
-    setDot('dot-mouvement', 'green');
-    el('sv-mouvement').textContent = `En déplacement · ${Math.round(speedKmh)} km/h`;
-    el('m-deplacement').textContent = `${Math.round(speedKmh)} km/h`;
-    el('m-deplacement').className = 'metric-val ok';
-  } else {
-    setDot('dot-mouvement', 'amber');
-    el('sv-mouvement').textContent = 'Stationnaire';
-    el('m-deplacement').textContent = 'Arrêté';
-    el('m-deplacement').className = 'metric-val warn';
+  // Immobilité suspecte
+  if (dist > CFG.immoMinDist) {
+    S.lastMoveTime = Date.now();
+    S.immoAlerted  = false;
+    el('immo-alert').classList.remove('show');
+  } else if (!S.immoAlerted && Date.now()-S.lastMoveTime > CFG.immoMs) {
+    S.immoAlerted = true;
+    el('immo-alert').classList.add('show');
+    triggerEmergency('IMMOBILITE_SUSPECTE', 'Aucun mouvement depuis 3 minutes');
   }
 
-  // Distance totale cumulée
-  if (STATE.prevLat !== null) {
-    STATE.distanceTotale += haversine(STATE.prevLat, STATE.prevLng, lat, lng);
-  }
+  dot('d-move', S.moving ? 'g' : 'a');
+  el('s-move').textContent = S.moving ? 'En déplacement · '+S.speed+' km/h' : 'Stationnaire';
+  el('m-speed').textContent = S.speed+' km/h';
+  el('m-speed').className   = 'metric-val ' + (S.speed > 0 ? 'ok' : 'warn');
 }
 
-// ══════════════════════════════════════════════════════════════════
-// AMÉLIORATION 1 — GÉOCODAGE INVERSE (quartier + rue)
-// ══════════════════════════════════════════════════════════════════
-async function reverseGeocode(lat, lng) {
-  if (!CFG.geocodeApiKey || CFG.geocodeApiKey.startsWith('REMPLACER')) {
-    // Fallback : Nominatim OpenStreetMap (gratuit, aucune clé requise)
-    try {
-      const r = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
-        { headers: { 'User-Agent': 'OSECOU-App/1.0' } }
-      );
-      const d = await r.json();
-      const a = d.address || {};
-      STATE.rue      = a.road || a.pedestrian || a.footway || null;
-      STATE.quartier = a.suburb || a.neighbourhood || a.quarter || a.city_district || null;
-      STATE.ville    = a.city || a.town || a.village || 'Abidjan';
-      STATE.adresse  = d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-      updateAddressUI();
-      setDot('dot-adresse', 'green');
-      el('sv-adresse').textContent = 'Adresse trouvée ✓';
-    } catch(e) {
-      setDot('dot-adresse', 'amber');
-      el('sv-adresse').textContent = 'Géocodage indisponible';
-    }
+// ═══════════════════════════════════════════════════════════════
+// DÉTECTION CHUTE / IMPACT (devicemotion)
+// ═══════════════════════════════════════════════════════════════
+let crashCooldown = false;
+function initCrashDetection() {
+  if (!window.DeviceMotionEvent) {
+    el('s-crash').textContent = 'Non supporté';
     return;
   }
-
-  // Google Geocoding API
-  try {
-    const r = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=fr&key=${CFG.geocodeApiKey}`
-    );
-    const d = await r.json();
-    if (d.status === 'OK' && d.results.length > 0) {
-      const comps = d.results[0].address_components || [];
-      const get = (type) => comps.find(c => c.types.includes(type))?.long_name || null;
-      STATE.rue      = get('route') || get('street_address');
-      STATE.quartier = get('sublocality_level_1') || get('neighborhood') || get('sublocality');
-      STATE.ville    = get('locality') || get('administrative_area_level_2') || 'Abidjan';
-      STATE.adresse  = d.results[0].formatted_address;
-      updateAddressUI();
-      setDot('dot-adresse', 'green');
-      el('sv-adresse').textContent = 'Adresse Google ✓';
-    }
-  } catch(e) {
-    setDot('dot-adresse', 'amber');
-    el('sv-adresse').textContent = 'Erreur géocodage';
-  }
-}
-
-function updateAddressUI() {
-  if (STATE.rue)      el('address-val').textContent = STATE.rue;
-  else if (STATE.adresse) el('address-val').textContent = STATE.adresse.split(',').slice(0,2).join(',');
-  
-  const parts = [];
-  if (STATE.quartier) parts.push(STATE.quartier);
-  if (STATE.ville)    parts.push(STATE.ville);
-  el('address-sub').textContent = parts.join(' · ');
-}
-
-// ══════════════════════════════════════════════════════════════════
-// AMÉLIORATION 2 — CARTE DIRECTEMENT VISIBLE DANS L'APP
-// ══════════════════════════════════════════════════════════════════
-function updateMap(lat, lng) {
-  const iframe = el('map-iframe');
-  const placeholder = el('map-placeholder');
-  
-  // OpenStreetMap embed (sans clé API, fonctionne toujours)
-  const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.005},${lat-0.004},${lng+0.005},${lat+0.004}&layer=mapnik&marker=${lat},${lng}`;
-  
-  if (iframe.src !== mapUrl) {
-    iframe.src = mapUrl;
-    iframe.onload = () => {
-      iframe.classList.add('loaded');
-      placeholder.style.display = 'none';
-    };
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// RÉSEAU — Anti-perte + file d'attente
-// ══════════════════════════════════════════════════════════════════
-function isOnline() { return navigator.onLine; }
-
-function updateReseauUI() {
-  if (isOnline()) {
-    setDot('dot-reseau', 'green');
-    el('sv-reseau').textContent = `En ligne${STATE.queue.length > 0 ? ` · Envoi file (${STATE.queue.length})` : ' ✓'}`;
+  // iOS 13+ nécessite une permission
+  if (typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission()
+      .then(r => r === 'granted' ? listenMotion() : (el('s-crash').textContent = 'Permission refusée'))
+      .catch(() => el('s-crash').textContent = 'Permission refusée');
   } else {
-    setDot('dot-reseau', 'amber');
-    el('sv-reseau').textContent = `Hors ligne · ${STATE.queue.length} en attente`;
+    listenMotion();
   }
 }
 
-async function flushQueue() {
-  if (!isOnline() || STATE.queue.length === 0) return;
-  const toSend = [...STATE.queue];
-  STATE.queue = [];
-  for (const payload of toSend) {
-    try {
-      await fetch(CFG.webhookUrl, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ ...payload, from_queue:true })
-      });
-    } catch(e) {
-      STATE.queue.unshift(payload); // remet en file si encore offline
-      break;
+function listenMotion() {
+  dot('d-crash','g');
+  el('s-crash').textContent = 'Actif — détection chute';
+  window.addEventListener('devicemotion', e => {
+    if (crashCooldown || S.crashActive) return;
+    const a = e.accelerationIncludingGravity;
+    if (!a) return;
+    const f = Math.sqrt(a.x**2 + a.y**2 + a.z**2);
+    if (f > CFG.crashForce) {
+      crashCooldown = true;
+      setTimeout(() => crashCooldown = false, 5000);
+      onCrashDetected(f);
     }
-  }
-  updateReseauUI();
+  });
 }
 
-window.addEventListener('online',  () => { updateReseauUI(); flushQueue(); });
-window.addEventListener('offline', () => { updateReseauUI(); });
+function onCrashDetected(force) {
+  S.crashActive = true;
+  el('crash-alert').classList.add('show');
+  el('crash-sub').textContent = 'Force: '+Math.round(force)+'g — Alerte dans '+Math.round(CFG.crashCancelMs/1000)+'s';
+  dot('d-crash','r');
+  el('s-crash').textContent = 'IMPACT DÉTECTÉ — '+Math.round(force)+'g';
 
-// ══════════════════════════════════════════════════════════════════
-// ADAPTATION BATTERIE
-// ══════════════════════════════════════════════════════════════════
-async function getBatteryLevel() {
-  if (!CFG.batteryAdapt || !navigator.getBattery) return 100;
-  try {
-    const bat = await navigator.getBattery();
-    return Math.round(bat.level * 100);
-  } catch(e) { return 100; }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// ENVOI WEBHOOK N8N
-// ══════════════════════════════════════════════════════════════════
-async function sendToN8n(payload) {
-  if (!isOnline()) {
-    // Mise en file hors-ligne
-    if (STATE.queue.length < CFG.queueMax) STATE.queue.push(payload);
-    updateReseauUI();
-    setDot('dot-send', 'amber');
-    el('sv-send').textContent = `Hors ligne · mis en file (#${STATE.queue.length})`;
-    return false;
-  }
-
-  try {
-    const r = await fetch(CFG.webhookUrl, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
-    if (r.ok) {
-      STATE.sendOk++;
-      setDot('dot-send', 'green');
-      el('sv-send').textContent = `Transmis ✓ · ${STATE.sendOk} envoi${STATE.sendOk>1?'s':''}`;
-      // Vider la file si elle existe
-      if (STATE.queue.length > 0) setTimeout(flushQueue, 500);
-      return true;
-    } else {
-      throw new Error(`HTTP ${r.status}`);
+  S.crashTimer = setTimeout(() => {
+    if (S.crashActive) {
+      triggerEmergency('CHUTE_IMPACT', 'Force détectée: '+Math.round(force)+'g');
     }
-  } catch(err) {
-    STATE.sendFail++;
-    setDot('dot-send', 'red');
-    el('sv-send').textContent = `Erreur · ${err.message}`;
-    if (STATE.queue.length < CFG.queueMax) STATE.queue.push(payload);
-    return false;
-  }
+  }, CFG.crashCancelMs);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// BOUCLE PRINCIPALE GPS
-// ══════════════════════════════════════════════════════════════════
-async function onPosition(position) {
-  const { latitude:lat, longitude:lng, accuracy, speed, altitude } = position.coords;
+function cancelCrash() {
+  S.crashActive = false;
+  clearTimeout(S.crashTimer);
+  el('crash-alert').classList.remove('show');
+  dot('d-crash','g');
+  el('s-crash').textContent = 'Actif — détection chute';
+}
 
-  // Validation anti-faux GPS
-  const check = validateGPS(lat, lng, accuracy, speed);
-  if (!check.valid) {
-    showError(`⚠️ Signal GPS suspect : ${check.reason}`);
-    setDot('dot-gps', 'red');
-    el('sv-gps').textContent = 'Signal invalide';
-    return;
-  }
-
-  hideError();
-  STATE.lat = lat; STATE.lng = lng; STATE.accuracy = accuracy;
-  STATE.sendCount++;
-
-  // Détection mouvement
-  detectMouvement(lat, lng);
-
-  // Géocodage inverse (pas à chaque envoi pour économiser quota API)
-  STATE.geocodeCount++;
-  if (STATE.geocodeCount === 1 || STATE.geocodeCount % CFG.geocodeEvery === 0) {
-    reverseGeocode(lat, lng); // async, non-bloquant
-  }
-
-  // Mise à jour carte
-  updateMap(lat, lng);
-
-  // UI coordonnées
-  el('coords-val').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-  el('m-precision').textContent = `±${Math.round(accuracy)}m`;
-  el('m-precision').className = 'metric-val ' + (accuracy < 30 ? 'ok' : accuracy < 80 ? 'warn' : 'err');
-  el('m-envois').textContent = STATE.sendCount;
-
-  setDot('dot-gps', 'green');
-  el('sv-gps').textContent = `Actif · ±${Math.round(accuracy)}m`;
-
-  // LIVE badge
-  el('live-dot').classList.remove('off');
-  el('live-label').textContent = 'EN DIRECT';
-
-  // Bouton Maps
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-  const mapsNav  = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-  el('btn-maps').href = mapsUrl;
-  el('btn-maps').classList.remove('hidden');
-
-  // Batterie
-  const battery = await getBatteryLevel();
-  const elapsed = Math.round((Date.now() - STATE.startTime) / 1000);
-
-  // Payload enrichi pour n8n
-  const payload = {
-    // Identifiants session
-    session_id:     STATE.sessionId,
-    alert_id:       STATE.alertId,
-    user_id:        STATE.userId,
-    user_name:      STATE.userName,
-    telegram_id:    STATE.telegramId,
-
-    // GPS
-    latitude:       lat,
-    longitude:      lng,
-    accuracy:       Math.round(accuracy),
-    speed_kmh:      speed ? Math.round(speed * 3.6) : 0,
-    altitude:       altitude ? Math.round(altitude) : null,
-
-    // Adresse géocodée
-    adresse:        STATE.adresse,
-    rue:            STATE.rue,
-    quartier:       STATE.quartier,
-    ville:          STATE.ville || 'Abidjan',
-
-    // Mouvement
-    en_deplacement: STATE.deplacement,
-    distance_totale_m: Math.round(STATE.distanceTotale),
-
-    // Liens Google Maps
-    google_maps_position:   mapsUrl,
-    google_maps_navigation: mapsNav,
-
-    // Méta
-    send_count:     STATE.sendCount,
-    elapsed_seconds:elapsed,
-    battery_pct:    battery,
+// ═══════════════════════════════════════════════════════════════
+// ALERTE D'URGENCE AUTOMATIQUE
+// ═══════════════════════════════════════════════════════════════
+function triggerEmergency(type, reason) {
+  sendToN8n({
+    type_alerte:    type,
+    reason:         reason,
+    latitude:       S.lat,
+    longitude:      S.lng,
+    adresse:        S.adresse,
+    quartier:       S.quartier,
+    ville:          S.ville,
+    session_id:     S.sessionId,
+    alert_id:       S.alertId,
+    user_id:        S.userId,
+    user_name:      S.userName,
+    telegram_id:    S.telegramId,
     timestamp:      new Date().toISOString(),
-    source:         'osecou_miniapp_pro',
-  };
-
-  await sendToN8n(payload);
-  updateReseauUI();
-
-  STATE.prevLat = lat;
-  STATE.prevLng = lng;
+    source:         'auto_trigger'
+  });
 }
 
-function onGpsError(err) {
-  let msg = 'Impossible d\'obtenir votre position.';
-  if (err.code === 1) msg = '🔒 Accès GPS refusé.\nAutoriser la localisation dans les paramètres de votre navigateur.';
-  if (err.code === 2) msg = '📡 Signal GPS indisponible.\nDéplacez-vous vers un endroit dégagé.';
-  if (err.code === 3) msg = '⏱️ Délai GPS dépassé. Nouvelle tentative…';
-  showError(msg);
-  setDot('dot-gps', 'red');
-  el('sv-gps').textContent = 'Erreur GPS';
-}
-
-function showError(msg) {
-  const b = el('err-box');
-  b.textContent = msg; b.classList.add('show');
-}
-function hideError() {
-  el('err-box').classList.remove('show');
-}
-
-// ══════════════════════════════════════════════════════════════════
-// DÉMARRAGE / ARRÊT
-// ══════════════════════════════════════════════════════════════════
-async function startTracking() {
-  STATE.running = true;
-
-  // Intégration Telegram WebApp SDK
-  if (window.Telegram?.WebApp) {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
-    window.Telegram.WebApp.MainButton.hide();
-  }
-
-  // Adaptation batterie : ralentit si < 20%
-  const bat = await getBatteryLevel();
-  let interval = CFG.intervalMs;
-  if (bat < 20) {
-    interval = CFG.intervalMs * 2; // 10s si batterie faible
-    el('sv-reseau').textContent = `🔋 Batterie faible (${bat}%) · intervalle réduit`;
-  }
-
-  // Watcher GPS haute précision (mise à jour continue)
-  if (navigator.geolocation) {
-    STATE.watchId = navigator.geolocation.watchPosition(
-      onPosition,
-      onGpsError,
-      { enableHighAccuracy: true, timeout: 9000, maximumAge: 2000 }
-    );
-    // Envoi périodique forcé (même si pas de mouvement)
-    STATE.intervalId = setInterval(async () => {
-      if (STATE.lat !== null) {
-        // Re-déclenche un getCurrentPosition pour forcer un refresh
-        navigator.geolocation.getCurrentPosition(onPosition, onGpsError, {
-          enableHighAccuracy: true, timeout: 8000, maximumAge: 0
-        });
+// ═══════════════════════════════════════════════════════════════
+// GÉOCODAGE INVERSE (Nominatim, gratuit)
+// ═══════════════════════════════════════════════════════════════
+async function reverseGeocode(lat, lng) {
+  try {
+    let rue=null, quartier=null, ville=null, adresse=null;
+    if (CFG.geocodeKey && !CFG.geocodeKey.startsWith('REMPLACER')) {
+      const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=fr&key=${CFG.geocodeKey}`);
+      const d = await r.json();
+      if (d.status==='OK' && d.results[0]) {
+        const get = t => d.results[0].address_components.find(c=>c.types.includes(t))?.long_name||null;
+        rue=get('route'); quartier=get('sublocality_level_1')||get('neighborhood'); ville=get('locality')||'Abidjan';
+        adresse=d.results[0].formatted_address;
       }
-    }, interval);
-  } else {
-    showError('Géolocalisation non supportée sur cet appareil.');
+    } else {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,{headers:{'User-Agent':'OSECOU/3.0'}});
+      const d = await r.json();
+      const a = d.address||{};
+      rue=a.road||a.pedestrian||null;
+      quartier=a.suburb||a.neighbourhood||a.quarter||null;
+      ville=a.city||a.town||a.village||'Abidjan';
+      adresse=d.display_name||null;
+    }
+    S.rue=rue; S.quartier=quartier; S.ville=ville; S.adresse=adresse;
+    const parts=[rue,quartier,ville].filter(Boolean);
+    el('address-val').textContent = parts.join(', ') || adresse?.split(',').slice(0,3).join(',') || '—';
+    el('address-sub').textContent = [quartier,ville].filter(Boolean).join(' · ');
+    dot('d-addr','g'); el('s-addr').textContent='Adresse trouvée ✓';
+  } catch(e) {
+    dot('d-addr','a'); el('s-addr').textContent='Géocodage indisponible';
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RÉSEAU & FILE D'ATTENTE (anti-perte)
+// ═══════════════════════════════════════════════════════════════
+function updateNetUI() {
+  if (navigator.onLine) {
+    dot('d-net','g');
+    el('s-net').textContent = S.queue.length ? 'En ligne · file: '+S.queue.length : 'En ligne ✓';
+  } else {
+    dot('d-net','a');
+    el('s-net').textContent = 'Hors ligne · '+S.queue.length+' en attente';
+  }
+}
+async function flushQueue() {
+  if (!navigator.onLine || !S.queue.length) return;
+  const q=[...S.queue]; S.queue=[];
+  for (const p of q) {
+    try { await fetch(CFG.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...p,from_queue:true})}); }
+    catch(e) { S.queue.unshift(p); break; }
+  }
+  updateNetUI();
+}
+window.addEventListener('online',  () => { updateNetUI(); flushQueue(); });
+window.addEventListener('offline', () => updateNetUI());
+
+// ═══════════════════════════════════════════════════════════════
+// BATTERIE
+// ═══════════════════════════════════════════════════════════════
+async function getBattery() {
+  if (!navigator.getBattery) return 100;
+  try { const b=await navigator.getBattery(); return Math.round(b.level*100); }
+  catch(e){ return 100; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENVOI N8N
+// ═══════════════════════════════════════════════════════════════
+async function sendToN8n(payload) {
+  if (!navigator.onLine) {
+    if (S.queue.length < CFG.queueMax) S.queue.push(payload);
+    updateNetUI(); dot('d-send','a'); el('s-send').textContent='Hors ligne · file:'+S.queue.length;
+    return false;
+  }
+  try {
+    const r = await fetch(CFG.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if (r.ok) {
+      S.sendOk++; dot('d-send','g'); el('s-send').textContent='Transmis ✓ · '+S.sendOk;
+      if (S.queue.length) setTimeout(flushQueue,300);
+      return true;
+    } else throw new Error('HTTP '+r.status);
+  } catch(e) {
+    S.sendFail++; dot('d-send','r'); el('s-send').textContent='Erreur · '+e.message;
+    if (S.queue.length < CFG.queueMax) S.queue.push(payload);
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HEARTBEAT SERVEUR (téléphone vivant)
+// ═══════════════════════════════════════════════════════════════
+async function sendHeartbeat() {
+  const bat = await getBattery();
+  const conn = navigator.connection;
+  sendToN8n({
+    type:       'heartbeat',
+    session_id: S.sessionId,
+    alert_id:   S.alertId,
+    user_id:    S.userId,
+    battery:    bat,
+    network:    conn?.effectiveType || 'unknown',
+    online:     navigator.onLine,
+    send_count: S.sendCount,
+    timestamp:  new Date().toISOString()
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CALLBACK POSITION GPS
+// ═══════════════════════════════════════════════════════════════
+async function onPosition(pos) {
+  const {latitude:rawLat, longitude:rawLng, accuracy:acc, speed, altitude} = pos.coords;
+  S.lastSendTime = Date.now();
+
+  // 1. Validation
+  const v = validateGPS(rawLat, rawLng, acc, speed);
+  if (!v.ok) {
+    dot('d-gps','r'); el('s-gps').textContent='Signal suspect: '+v.reason; return;
+  }
+
+  // 2. Filtre Kalman (lissage anti-saut)
+  const {lat, lng} = kalman(rawLat, rawLng);
+  S.lat=lat; S.lng=lng; S.acc=Math.round(acc);
+  S.sendCount++;
+
+  // 3. Mouvement + immobilité
+  analyseMovement(lat, lng);
+
+  // 4. Géocodage (espacé)
+  S.geocodeN++;
+  if (S.geocodeN===1 || S.geocodeN%CFG.geocodeEvery===0) reverseGeocode(lat, lng);
+
+  // 5. Carte Leaflet
+  updateMap(lat, lng, acc);
+
+  // 6. UI
+  el('coords-val').textContent = lat.toFixed(6)+', '+lng.toFixed(6);
+  el('m-prec').textContent='±'+S.acc+'m';
+  el('m-prec').className='metric-val '+(acc<30?'ok':acc<80?'warn':'err');
+  el('m-envois').textContent=S.sendCount;
+  const bat=await getBattery();
+  el('m-bat').textContent=bat+'%';
+  el('m-bat').className='metric-val '+(bat>50?'ok':bat>20?'warn':'err');
+  dot('d-gps','g'); el('s-gps').textContent='Actif · ±'+S.acc+'m';
+  el('live-dot').classList.remove('off'); el('live-label').textContent='EN DIRECT';
+
+  const mapsPos = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  const mapsNav = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+  el('btn-maps').href=mapsPos; el('btn-maps').classList.remove('hidden');
+
+  // 7. Envoi webhook
+  const elapsed=Math.round((Date.now()-S.startTime)/1000);
+  const adresseF=[S.rue,S.quartier,S.ville].filter(Boolean).join(', ')||`${lat.toFixed(5)},${lng.toFixed(5)}`;
+  const tmsg=[
+    `🆘 *ALERTE O'SECOU — Position #${S.sendCount}*`,
+    ``,`👤 *Victime :* ${S.userName}`,
+    `${S.moving?'🚗':'📌'} *Mouvement :* `+(S.moving?`En déplacement · ${S.speed} km/h`:'Stationnaire'),
+    ``,`📍 *Adresse :* ${adresseF}`,
+    `🎯 *GPS :* \`${lat.toFixed(6)}, ${lng.toFixed(6)}\``,
+    `📊 *Précision :* ±${S.acc}m`,
+    ``,`🗺️ [Voir position](${mapsPos})  ·  [Naviguer](${mapsNav})`,
+    ``,`⏱️ *Durée :* ${elapsed>=60?Math.floor(elapsed/60)+'min ':''+(elapsed%60)+'s'} | 🔋 ${bat}%`,
+    `🕐 ${new Date().toLocaleTimeString('fr-FR',{timeZone:'Africa/Abidjan'})}`
+  ].join('\n');
+
+  await sendToN8n({
+    session_id:S.sessionId, alert_id:S.alertId, user_id:S.userId, user_name:S.userName, telegram_id:S.telegramId,
+    latitude:lat, longitude:lng, accuracy:S.acc, speed_kmh:S.speed, altitude:altitude?Math.round(altitude):null,
+    adresse:S.adresse, adresse_formatee:adresseF, rue:S.rue, quartier:S.quartier, ville:S.ville||'Abidjan',
+    en_deplacement:S.moving, distance_totale_m:Math.round(S.distTotal),
+    google_maps_position:mapsPos, google_maps_navigation:mapsNav,
+    carte_statique_url:`https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=16&size=600x300&markers=${lat},${lng},red-pushpin`,
+    telegram_message:tmsg, send_count:S.sendCount, elapsed_seconds:elapsed, battery_pct:bat,
+    timestamp:new Date().toISOString(), source:'osecou_gps_v3', type:'position'
+  });
+  updateNetUI();
+  S.prevLat=lat; S.prevLng=lng;
+}
+
+function onGpsError(e) {
+  const msgs={1:'GPS refusé — autorisez la localisation',2:'Signal GPS indisponible',3:'Délai GPS — nouvelle tentative…'};
+  dot('d-gps','r'); el('s-gps').textContent=msgs[e.code]||'Erreur GPS';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WATCHDOG — redémarrage auto si bloqué
+// ═══════════════════════════════════════════════════════════════
+function startWatchdog() {
+  S.watchdogId = setInterval(() => {
+    if (!S.running) return;
+    const stale = Date.now() - S.lastSendTime > CFG.watchdogMs * 2;
+    if (stale) { stopTracking(); startTracking(); }
+  }, CFG.watchdogMs);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DÉMARRAGE / ARRÊT
+// ═══════════════════════════════════════════════════════════════
+async function startTracking() {
+  if (!navigator.geolocation) { el('s-gps').textContent='GPS non supporté'; return; }
+  S.running=true; S.startTime=Date.now(); S.lastSendTime=Date.now();
+
+  // Telegram WebApp
+  if (window.Telegram?.WebApp) { window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand(); }
+
+  // Adaptation batterie
+  const bat=await getBattery();
+  el('m-bat').textContent=bat+'%';
+  el('m-bat').className='metric-val '+(bat>50?'ok':bat>20?'warn':'err');
+  const interval = bat < CFG.batteryLow ? CFG.intervalMs*2 : CFG.intervalMs;
+
+  // watchPosition (continu)
+  S.watchId = navigator.geolocation.watchPosition(onPosition, onGpsError,
+    {enableHighAccuracy:true, maximumAge:2000, timeout:10000});
+
+  // getCurrentPosition forcé périodique
+  S.intervalId = setInterval(() => {
+    navigator.geolocation.getCurrentPosition(onPosition, onGpsError,
+      {enableHighAccuracy:true, maximumAge:0, timeout:8000});
+  }, interval);
+
+  // Heartbeat
+  S.heartId = setInterval(sendHeartbeat, CFG.heartbeatMs);
+
+  // Watchdog redémarrage auto
+  startWatchdog();
+
+  // Détection chute
+  initCrashDetection();
+
+  updateNetUI();
 }
 
 function stopTracking() {
-  STATE.running = false;
-  if (STATE.intervalId)  clearInterval(STATE.intervalId);
-  if (STATE.watchId !== null) navigator.geolocation.clearWatch(STATE.watchId);
-
-  el('live-dot').classList.add('off');
-  el('live-label').textContent = 'Arrêté';
-  setDot('dot-gps', '');
-  setDot('dot-send', '');
-
-  const btn = el('btn-stop');
-  btn.textContent = '✓ Partage de position arrêté';
-  btn.disabled = true;
-
-  if (window.Telegram?.WebApp) {
-    setTimeout(() => window.Telegram.WebApp.close(), 1200);
-  }
+  S.running=false;
+  if (S.watchId!==null) navigator.geolocation.clearWatch(S.watchId);
+  [S.intervalId, S.heartId, S.watchdogId].forEach(clearInterval);
+  el('live-dot').classList.add('off'); el('live-label').textContent='Arrêté';
+  const b=el('btn-stop'); b.textContent='✓ Partage arrêté'; b.disabled=true;
+  if (window.Telegram?.WebApp) setTimeout(()=>window.Telegram.WebApp.close(),1200);
 }
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-RECONNEXION si page crash (15s)
+// ═══════════════════════════════════════════════════════════════
+setInterval(()=>{ if(!S.running && !el('btn-stop').disabled) startTracking(); }, 15000);
 
 window.addEventListener('load', startTracking);
 window.addEventListener('beforeunload', stopTracking);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && S.running) flushQueue(); });
 </script>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
 </html>
